@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import ProjectOverview from "@/components/ProjectOverview";
+import Filter from "@/components/Filter";
 
 export const ProjectList = () => {
 
-    const [projects, setProjects] = useState([{key:0, name:"Project1", done:false},{key:1, name:"Project2", done:false}]);
+    const [projects, setProjects] = useState([{key:0, name:"Project1", done:true},{key:1, name:"Project2", done:false}]);
     const [filter, setFilter] = useState("ALL");
 
-    // // テキストファイルからProject一覧を取得する．
-    // const getProjectList = () =>{
+    // // テキストファイルからProject一覧を取得する．いつかはDBで管理
+    // const getProjectListFromText = () =>{
 
     // }
 
@@ -17,24 +18,54 @@ export const ProjectList = () => {
 
     const displayProjects = projects.filter(project => {
         if (filter === "ALL")return true;
-        if (filter === 'TODO') return !project.done;
-        if (filter === 'DONE') return project.done;
+        if (filter === "TODO") return !project.done;
+        if (filter === "DONE") return project.done;
+    }).sort((a, b) => {
+        // filterがALLの場合、project.doneがtrueのものを前にしてソートする
+        if (filter === "ALL") {
+            if (!a.done && b.done) {
+                return -1;
+            } else if (a.done && !b.done) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        return 0; // filterがALL以外の場合はソートしない
     });
 
-    const handleCheck = chekedProject =>{
-        return null;
+
+    const handleCheck = checkedProject =>{
+        // チェックがついたToDoのみ，真偽値(done)を変更
+        const newList = projects.map(project => {
+        if (project.key === checkedProject.key) {
+            project.done = !project.done;
+        }
+        return project;
+        });
+        
+        setProjects(newList);
     }
 
     return (
         <div>
             <div>
-                {
-                    displayProjects.map(project => (
-                        <ProjectOverview
-                          project={project}
-                          onCheck={handleCheck}/>
-                    ))
-                }
+                <Filter 
+                selectedFilter={filter}
+                handleFilterChange={handleFilterChange}/>
+            </div>
+            <div>
+                <ul class="w-48 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    {
+                        displayProjects.map(project => (
+                            <li class="w-full border-b border-gray-200 rounded-t-lg dark:border-gray-600">
+                                <ProjectOverview
+                                project={project}
+                                onCheck={handleCheck}/>
+                            </li>
+                        ))
+                    }
+                </ul>
             </div>
         </div>
     )
