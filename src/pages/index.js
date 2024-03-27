@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 
 import {ProjectList} from "@/components/ProjectList"
 
-
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
