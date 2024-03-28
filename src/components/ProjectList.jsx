@@ -4,12 +4,12 @@ import Filter from "@/components/Filter";
 
 export const ProjectList = () => {
 
-    const [projects, setProjects] = useState([{key:0, name:"Project1", latestTodo:"直近のTodo1", iconName:"book", done:true},{key:1, name:"Project2", latestTodo:"直近のTodo2", iconName:"person", done:false}]);
+    const [projects, setProjects] = useState([{id:0, name:"Project1", latestTodo:"直近のTodo1", iconName:"book", done:true},{id:1, name:"Project2", latestTodo:"直近のTodo2", iconName:"person", done:false}]);
     const [filter, setFilter] = useState("ALL");
 
     // // テキストファイルからProject一覧を取得する．いつかはDBで管理
     // const getProjectListFromText = () =>{
-        // const  [projects, setProjects] = useState([{key:0, name:"Project1", latestTodo:"直近のTodo1", done:true},{key:1, name:"Project2", latestTodo:"直近のTodo2", done:false}]);
+        // const  [projects, setProjects] = useState([{id:0, name:"Project1", latestTodo:"直近のTodo1", done:true},{id:1, name:"Project2", latestTodo:"直近のTodo2", done:false}]);
     // }
 
     
@@ -38,7 +38,7 @@ export const ProjectList = () => {
     const handleCheck = checkedProject =>{
         // チェックがついたToDoのみ，真偽値(done)を変更
         const newList = projects.map(project => {
-        if (project.key === checkedProject.key) {
+        if (project.id === checkedProject.id) {
             project.done = !project.done;
         }
         return project;
@@ -56,10 +56,10 @@ export const ProjectList = () => {
             </div>          
 
             <div>
-                <ul class="max-w-lg divide-y divide-gray-400 dark:divide-gray-700">
+                <ul className="max-w-lg divide-y divide-gray-400 dark:divide-gray-700">
                     {
                         displayProjects.map(project => (
-                            <li class="pt-4 sm:pt-4 pb-4 sm:pb-4">
+                            <li key={project.id} className="pt-4 sm:pt-4 pb-4 sm:pb-4">
                                 <ProjectOverview
                                 project={project}
                                 onCheck={handleCheck}/>
