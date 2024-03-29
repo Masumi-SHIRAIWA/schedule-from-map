@@ -4,6 +4,7 @@ import Filter from "@/components/Filter";
 
 export const ProjectList = () => {
 
+    // 変える
     const [projects, setProjects] = useState([{id:0, name:"Project1", latestTodo:"直近のTodo1", iconName:"book", done:true},{id:1, name:"Project2", latestTodo:"直近のTodo2", iconName:"person", done:false}]);
     const [filter, setFilter] = useState("ALL");
 
