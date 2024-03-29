@@ -2,17 +2,11 @@ import React, { useState } from 'react';
 import ProjectOverview from "@/components/ProjectOverview";
 import Filter from "@/components/Filter";
 
-export const ProjectList = () => {
+export const ProjectList = (props) => {
 
     // 変える
-    const [projects, setProjects] = useState([{id:0, name:"Project1", latestTodo:"直近のTodo1", iconName:"book", done:true},{id:1, name:"Project2", latestTodo:"直近のTodo2", iconName:"person", done:false}]);
+    const [projects, setProjects] = useState(props.projects);
     const [filter, setFilter] = useState("ALL");
-
-    // // テキストファイルからProject一覧を取得する．いつかはDBで管理
-    // const getProjectListFromText = () =>{
-        // const  [projects, setProjects] = useState([{id:0, name:"Project1", latestTodo:"直近のTodo1", done:true},{id:1, name:"Project2", latestTodo:"直近のTodo2", done:false}]);
-    // }
-
     
     // Filterの切り替え
     const handleFilterChange = value => setFilter(value);
