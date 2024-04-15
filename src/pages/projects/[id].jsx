@@ -10,21 +10,28 @@ export async function getServerSideProps(context){
     const { id } = context.params;
 
     // データベースからIDに関連するデータを取得
-    const data = await prisma.projects.findUnique({
+    const project = await prisma.project.findUnique({
     where: {
         id: parseInt(id),
     },
     });
 
+    // Date型をStringに変換
+//   const projectsWithoutDates = project.map(project => ({
+//     ...project,
+//     deadline: project.deadline.toISOString(), // Date型をISO 8601文字列に変換
+//   }));
+    project.deadline = project.deadline.toISOString();
+
     return {
     props: {
-        data,
+        project,
     },
     };
 }
 
 const Project = (props) => {
-    console.log(props.data)
+    console.log(props.project)
 
     return (
 
@@ -33,22 +40,13 @@ const Project = (props) => {
                             <div className="flex-shrink-0">
                     <Image className="w-10 h-10 rounded-full" src="/favicon.ico" width="0" height="0"/>
                 </div>
-                <div className="inline-block font-bold text-2xl leading-10 mt-8 mb-8">Project: {props.data.name}</div>
+                <div className="inline-block font-bold text-2xl leading-10 mt-8 mb-8">Project: {props.project.name}</div>
             </div>
             <div className="row-span-4 p-10 m-10  border border-gray-800 rounded-md">
                 <MindMap/>
             </div>
         </div>
 
-        // <div className={`flex flex-col min-h-screen`}>
-        //     <div className="flex items-center px-10 w-full "> 
-        //                     <div className="flex-shrink-0">
-        //             <Image className="w-10 h-10 rounded-full" src="/favicon.ico" width="0" height="0"/>
-        //         </div>
-        //         <div className="inline-block font-bold text-2xl leading-10 mt-8 mb-8">Project: {props.data.name}</div>
-        //     </div>
-        //     <MindMap />
-        // </div>
     )
     
 };

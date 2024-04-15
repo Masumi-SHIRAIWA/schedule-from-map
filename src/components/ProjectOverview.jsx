@@ -30,7 +30,7 @@ export const ProjectOverview = (props) => {
                 </div>
 
                 <div className="flex-shrink-1  min-w-0 items-center text-base font-normal text-gray-900 dark:text-white">
-                    Latest Todo : {project.latestTodo}
+                    Latest Todo : {project.latestTasks}
                 </div>
 
             </div>

@@ -10,10 +10,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Projects {
-  id Int @id @default(autoincrement())
-  done Boolean @default(false)
-  name String
-  latestTodo String
-  iconName String @default("default")
+
+model User {
+    id  Int @id @default(autoincrement())
+    name    String
+    projects Project[]
+}
+
+model Project {
+    id Int @id @default(autoincrement())
+    name String
+    owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+    ownerId Int
+    icon String
+    done Boolean @default(false)
+    deadline DateTime
+    latestTasks String?
+    tasks Task[]
+}
+
+model Task {
+    id Int @id @default(autoincrement())
+    name String
+    done Boolean @default(false)
+    deadline DateTime
+    project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId Int 
+    x Int @default(0)
+    y Int @default(0)
+    parentId Int?
 }
