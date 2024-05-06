@@ -25,6 +25,7 @@ CREATE TABLE "Task" (
     "projectId" INTEGER NOT NULL,
     "x" INTEGER NOT NULL DEFAULT 0,
     "y" INTEGER NOT NULL DEFAULT 0,
+    "ownId" INTEGER NOT NULL,
     "parentId" INTEGER,
     CONSTRAINT "Task_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
