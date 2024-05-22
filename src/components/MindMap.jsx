@@ -6,8 +6,18 @@ import ReactFlow, {
     useNodesState,
     useEdgesState,
     addEdge,
+    ConnectionLineType,
   } from "reactflow";
 import "reactflow/dist/style.css";
+
+// Nodeのカスタム用．ReactFlowにプロパティとして渡す
+// import TextUpdaterNode from './TextUpdaterNode';
+import NodesDesign  from "./mindMapDesign/NodesDesign";
+// Edgeのカスタム用．ReactFlowにプロパティとして渡す
+import EdgesDesign  from "./mindMapDesign/EdgesDesign";
+
+
+// ------------------------- END of import part -------------------------
 
 // const initialNodes = [
 //   {
@@ -27,32 +37,55 @@ import "reactflow/dist/style.css";
 function initializeNodes(tasks){
   const nodes = tasks.map(task=> ({
     id: task.ownId.toString(),
-    type: "input",
+    type: "mindmap",
     data: { label: task.name },
     position: {x: task.x, y: task.y},
     
   }));
   return nodes;
 }
+// エッジの初期化．Tasksから親と子の関係を取得し作成する
+function initializeEdges(tasks){}
 
 const initialEdges = [];
+
+// NodeとEdgeの見た目を変える．mindMapDesign内のComponentで設定した見た目にする
+const nodeTypes = {
+  mindmap: NodesDesign,
+};
+const edgeTypes = {
+  mindmap: EdgesDesign,
+};
+
+// エッジが実際に確定する前に表示されるラインのスタイル(色・幅)を制御
+const connectionLineStyle = { stroke: '#FFAA11', strokeWidth: 3};
+
+// 新しいエッジが確定されたときに適用されるデフォルトのオプションを指定
+const defaultEdgeOptions = { style: { stroke: '#FFAA11', strokeWidth: 3 } , type: 'mindmap'};
+
 
 // onLoad関数：ReactFlowにプロパティとして渡す
 const onLoad = (reactFlowInstance) => {
 // fitView: すべてのノードとエッジが表示されるようにビューを調整する
+// グラフ全体がコンポーネントのビューポート内に収まるよう
   reactFlowInstance.fitView();
 };
 
 // MindMap Component
 export default function MindMap({taskList, projectId}) {
-  // DBからTaskを取得・Type属性の追加（DB反映時に使用）
-  taskList = taskList.map(task => ({
-    ...task,
-    type: "EXISTING"
-  }))
+
+  // 初期レンダリング時の処理
+  useEffect(() => {
+    // DBからTaskを取得・Type属性の追加（DB反映時に使用）
+    taskList = taskList.map(task => ({
+      ...task,
+      type: "EXISTING"
+    }))
+    console.log("初期レンダリング：", taskList);
+  }, [])
+
   // 独自のステート管理
   const [tasks, setTasks] = useState(taskList);
-  console.log("更新され続けちゃってるよ！！！！")
   const initialNodes = initializeNodes(tasks);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -75,6 +108,7 @@ export default function MindMap({taskList, projectId}) {
           x: x,
           y: y,
         },
+        type: "mindmap",
       })
     );
 
@@ -98,6 +132,7 @@ export default function MindMap({taskList, projectId}) {
     document.getElementById('deadlineForm').value=''; 
 
   };
+
 
   // ノードの削除：nodesから削除．Tasks StateのTypeを”DEL"に 
   const delNode = () => {
@@ -124,7 +159,7 @@ export default function MindMap({taskList, projectId}) {
         name: node.data.label,
         x: node.position.x,
         y: node.position.y,
-        type: taskTemp.type == "NEW" ? "NEW" : updated ? "UPDATE" : "EXISTING"
+        type: taskTemp.type == "NEW" ? "NEW" : updated ? "UPDATE" : "EXISTING" //"DEL"も追加
       })
     }
     console.log("tasksMap: ", tasksMap);
@@ -149,11 +184,10 @@ export default function MindMap({taskList, projectId}) {
     })))
 
   }
-
-
-    // コールバックとして定義し無駄なレンダリングを防ぐ
+  // onConnect：ノード間にエッジ（接続）が追加されたときに呼ばれるコールバック関数
+  // コールバックとして定義し無駄なレンダリングを防ぐ
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params) => setEdges((edges) => addEdge(params, edges)),
     [setEdges]
   );
 
@@ -175,22 +209,36 @@ export default function MindMap({taskList, projectId}) {
           </button>
       </div>
       <ReactFlow 
+          // Node
           nodes={nodes}
-          edges={edges}
+          nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
+
+          // Edge
+          edges={edges}
+          edgeTypes={edgeTypes}
           onEdgesChange={onEdgesChange}
+          connectionLineStyle={connectionLineStyle} // 接続前
+          defaultEdgeOptions={defaultEdgeOptions} // 接続後
+          connectionLineType={ConnectionLineType.Straight} // 接続前のエッジの形を制御
+          // ConnectionLineType.Bezier: 曲線の接続ライン(default)
+          // ConnectionLineType.Straight: 直線の接続ライン
+          // ConnectionLineType.Step: 階段状の接続ライン
+          
           onConnect={onConnect}
+
+
           onLoad={onLoad}
           className="flex-grow h-100 w-100">
 
           <Controls />
-          <MiniMap
+          {/* <MiniMap
             nodeColor={(n) => {
               if (n.type === "input") return "blue";
 
               return "#FFCC00";
           }}
-          />
+          /> */}
       </ReactFlow>
     </div>
 
