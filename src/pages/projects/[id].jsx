@@ -5,6 +5,9 @@ import Image from 'next/image'
 
 import MindMap from '@/components/MindMap'
 
+// React Flow フックを使用するためにインポート
+import { ReactFlowProvider } from 'reactflow';
+
 // SSRの場合
 export async function getServerSideProps(context){
     const { id } = context.params;
@@ -56,7 +59,9 @@ const Project = (props) => {
                 <div className="inline-block font-bold text-2xl leading-10 mt-8 mb-8">Project: {props.project.name}</div>
             </div>
             <div className="row-span-4 p-10 m-10  border border-gray-800 rounded-md">
-                <MindMap taskList={props.tasks} projectId={props.project.id}/> 
+                <ReactFlowProvider>
+                    <MindMap taskList={props.tasks} projectId={props.project.id}/> 
+                </ReactFlowProvider>
             </div>
         </div>
 

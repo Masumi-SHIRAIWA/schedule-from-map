@@ -1,5 +1,5 @@
 import { Result } from "postcss";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import ReactFlow, {
     MiniMap,
     Controls,
@@ -7,12 +7,16 @@ import ReactFlow, {
     useEdgesState,
     addEdge,
     ConnectionLineType,
+    useStoreApi,
+    useReactFlow,
+    nodeOrigin,
   } from "reactflow";
 import "reactflow/dist/style.css";
 
 // Nodeのカスタム用．ReactFlowにプロパティとして渡す
 // import TextUpdaterNode from './TextUpdaterNode';
 import NodesDesign  from "./mindMapDesign/NodesDesign";
+import RootNodeDesign from "./mindMapDesign/RootNodeDesign";
 // Edgeのカスタム用．ReactFlowにプロパティとして渡す
 import EdgesDesign  from "./mindMapDesign/EdgesDesign";
 
@@ -52,6 +56,7 @@ const initialEdges = [];
 // NodeとEdgeの見た目を変える．mindMapDesign内のComponentで設定した見た目にする
 const nodeTypes = {
   mindmap: NodesDesign,
+  root: RootNodeDesign,
 };
 const edgeTypes = {
   mindmap: EdgesDesign,
@@ -92,9 +97,17 @@ export default function MindMap({taskList, projectId}) {
   const [taskName, setTaskName] = useState("");
   const [deadline, setDeadline] = useState(null)
 
+  const connectingNodeId = useRef(null); //
+  const store = useStoreApi(); // React Flowの"ストア"にアクセスするカスタムフックの1つ
+  // React Flowのストアには、ノードやエッジ、ペインなどの重要な情報が含まれている
+  const { screenToFlowPosition } = useReactFlow(); // React Flowの"コンポーネント"のプロパティや状態，イベントにアクセスできる．
+
+
   // ノードの追加：Tasks Stateにも追加
   const addNode = (e) => {
     e.preventDefault();
+    const ownIds = [];
+    // for 
     
     const ownId = (nodes.length + 1);
     const x = Math.random() * window.innerWidth;
@@ -112,27 +125,49 @@ export default function MindMap({taskList, projectId}) {
       })
     );
 
+  };
+
+  
+  // エッジを伸ばして子ノードを作成
+  const addChildNode = (parentNode, childNodePosition) => {
+    const ownId = (nodes.length + 1);
+    const position = childNodePosition;
+    const deadline = null; // この追加の場合，Deadlineをどう決めるか
+
+    setNodes((prevNodes) =>
+      prevNodes.concat({
+        id: ownId.toString(),
+        data: { label: "NewTask" },
+        position,
+        type: "mindmap",
+      })
+    );
+
+    // setEdges((prevEdges) => 
+    //   prevEdges.concat({
+    //     id: ,
+    //     source: parentNode.id,
+    //     target: newNode.id,
+    //   })
+    // );
+
     // Tasks Stateにも追加
     setTasks((prevTasks) => 
       prevTasks.concat({
         id: null,
-        name: taskName,
+        name: "NewTask",
         done: false,
         deadline: deadline,
         projectId: projectId, // 変更
-        x: x,
-        y: y,
+        x: childNodePosition.x,
+        y: childNodePosition.y,
         ownId: ownId,
-        parentId: null, // 変更
+        parentId: parentNode.id, // 変更
         type: "NEW"
       })
     );
-    console.log(tasks)
-    document.getElementById('taskNameForm').value=''; 
-    document.getElementById('deadlineForm').value=''; 
-
-  };
-
+  
+  }
 
   // ノードの削除：nodesから削除．Tasks StateのTypeを”DEL"に 
   const delNode = () => {
@@ -184,12 +219,68 @@ export default function MindMap({taskList, projectId}) {
     })))
 
   }
+
+  // マウスの位置から，Nodeの位置を適切に割当てる．
+  const getChildNodePosition = (event, parentNode) => { //(event=マウスイベント，親ノードの位置)
+    const { domNode } = store.getState(); // React FlowのストアからdomNodeを取得
+  
+    if (
+      !domNode ||
+      !parentNode?.positionAbsolute ||
+      !parentNode?.width ||
+      !parentNode?.height
+    ) {
+      return;
+    }
+  
+    const panePosition = screenToFlowPosition({ //マウスイベントの座標をReact Flowの座標に変換
+      x: event.clientX,
+      y: event.clientY,
+    });
+    console.log(panePosition.x, )
+  
+    return { // Drugした場所 = 新ノードの位置
+      x: panePosition.x, // - parentNode.positionAbsolute.x + parentNode.width / 2,
+      y: panePosition.y, // - parentNode.positionAbsolute.y + parentNode.height / 2,
+    };
+  };
+
   // onConnect：ノード間にエッジ（接続）が追加されたときに呼ばれるコールバック関数
   // コールバックとして定義し無駄なレンダリングを防ぐ
   const onConnect = useCallback(
-    (params) => setEdges((edges) => addEdge(params, edges)),
+    (params) => {
+      console.log("params: ", params);
+      setEdges((edges) => addEdge(params, edges));
+    
+    },
     [setEdges]
   );
+
+  const onConnectStart = useCallback((_, {nodeId}) => {
+    console.log("in onConnectStart, _ : ", _);
+    console.log("in onConnectStart, nodeId : ", nodeId);
+    connectingNodeId.current = nodeId;
+  }, [])
+
+  const onConnectEnd = useCallback((event) => {
+    console.log("onConnectEnd, event: ", event);
+    const {nodeInternals} = store.getState(); // React Flow上のノード情報を得る．
+    
+    // 接続がパネル上で終了した場合のみ
+    const targetIsPane = event.target.classList.contains('react-flow__pane');
+    console.log(targetIsPane)
+
+
+    if (targetIsPane && connectingNodeId.current) {
+      console.log("in connected node id",connectingNodeId.current)
+      const parentNode = nodeInternals.get(connectingNodeId.current);
+      const childNodePosition = getChildNodePosition(event, parentNode);
+
+      if (parentNode && childNodePosition) {
+        addChildNode(parentNode, childNodePosition);
+      }
+    }
+  }, [getChildNodePosition])
 
   return (
     <div id="container" className="flex flex-col w-full h-full ">
@@ -213,6 +304,7 @@ export default function MindMap({taskList, projectId}) {
           nodes={nodes}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
+          nodeOrigin= {[0.5, 0.5]} // ノードの原点を指定
 
           // Edge
           edges={edges}
@@ -226,9 +318,13 @@ export default function MindMap({taskList, projectId}) {
           // ConnectionLineType.Step: 階段状の接続ライン
           
           onConnect={onConnect}
+          onConnectStart={onConnectStart}
+          onConnectEnd={onConnectEnd}
 
 
           onLoad={onLoad}
+          fitView
+
           className="flex-grow h-100 w-100">
 
           <Controls />
