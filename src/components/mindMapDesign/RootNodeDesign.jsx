@@ -12,13 +12,15 @@ export default function RootNodeDesign({ id, data }) {
         </div> */}
 
         {/* 新UI */}
-        <div className="relative flex items-center justify-center">
-        <input type="checkbox" className="absolute left-0 rounded-full ml-2" />
-        <div className="bg-white rounded-full p-4 w-72 h-24 flex flex-col justify-center items-center">
-          <div className="font-semibold text-4xl text-orange-300">{data.label}</div>
-          <div className="text-sm text-orange-300">{data.label}</div>
+        <div className="dragHandle relative flex items-center justify-center">
+          <input type="checkbox" className="absolute left-0 rounded-full ml-2" />
+          <div className="bg-white rounded-full p-6 w-72 h-72 flex flex-col justify-center items-center">
+            <div className="font-semibold text-5xl text-orange-300 text-center">{data.taskName}</div>
+            <div className="text-2x1 text-orange-300 text-center">{data.deadline}</div>
+          </div>
         </div>
-      </div>
+
+
         {/*  */}
 
         {/* HandleとはEdgeを生やす点 */}

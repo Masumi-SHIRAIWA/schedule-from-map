@@ -37,6 +37,7 @@ model Task {
     projectId Int 
     x Int @default(0)
     y Int @default(0)
-    ownId Int
+    nodeId Int
+    rootNode Boolean @default(false)
     parentId Int?
 }

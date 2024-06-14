@@ -18,7 +18,8 @@ export default async function handler(req, res){
               projectId: task.projectId,
               x: task.x,
               y: task.y,
-              ownId: task.ownId,
+              nodeId: task.nodeId,
+              rootNode: task.rootNode,
               parentId: task.parentId
             }
           });
@@ -35,7 +36,8 @@ export default async function handler(req, res){
               projectId: task.projectId,
               x: task.x,
               y: task.y,
-              ownId: task.ownId,
+              nodeId: task.nodeId,
+              rootNode: task.rootNode,
               parentId: task.parentId
             }
           });

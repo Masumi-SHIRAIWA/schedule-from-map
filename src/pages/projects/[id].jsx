@@ -53,12 +53,12 @@ const Project = (props) => {
 
         <div className={`grid grid-rows-5 gap-0 w-screen h-screen`}>
             <div className="flex items-center px-10 w-full "> 
-                            <div className="flex-shrink-0">
+                <div className="flex-shrink-0">
                     <Image className="w-10 h-10 rounded-full" src="/favicon.ico" width="0" height="0"/>
                 </div>
                 <div className="inline-block font-bold text-2xl leading-10 mt-8 mb-8">Project: {props.project.name}</div>
             </div>
-            <div className="row-span-4 p-10 m-10  border border-gray-800 rounded-md">
+            <div className="row-span-4 p-10 m-3  border border-gray-800 rounded-md">
                 <ReactFlowProvider>
                     <MindMap taskList={props.tasks} projectId={props.project.id}/> 
                 </ReactFlowProvider>
