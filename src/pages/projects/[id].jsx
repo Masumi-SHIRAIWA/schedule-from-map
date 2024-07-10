@@ -1,7 +1,7 @@
 // 個別のプロジェクトのページ．
 import { useRouter } from "next/router";
 import prisma from "@/util/prisma";
-import Image from 'next/image'
+import {ProjectIcons} from '@/components/projectIcons/ProjectIcons'
 
 import MindMap from '@/components/MindMap'
 
@@ -33,7 +33,7 @@ export async function getServerSideProps(context){
     // Date型をStringに変換
     const tasksWithoutDates = tasks.map(task => ({
         ...task,
-        deadline: task.deadline.toISOString(), // Date型をISO 8601文字列に変換
+        deadline: task.deadline.toISOString(), // Date型をISO 8601[文字列]に変換
     }));
 
 
@@ -54,9 +54,9 @@ const Project = (props) => {
         <div className={`grid grid-rows-5 gap-0 w-screen h-screen`}>
             <div className="flex items-center px-10 w-full "> 
                 <div className="flex-shrink-0">
-                    <Image className="w-10 h-10 rounded-full" src="/favicon.ico" width="0" height="0"/>
+                    <ProjectIcons className="h-14 w-14 fill-gray-500" type="book"/>
                 </div>
-                <div className="inline-block font-bold text-2xl leading-10 mt-8 mb-8">Project: {props.project.name}</div>
+                <div className="inline-block font-bold text-4xl text-gray-700 leading-10 mt-8 mb-8">{props.project.name}</div>
             </div>
             <div className="row-span-4 p-10 m-3  border border-gray-800 rounded-md">
                 <ReactFlowProvider>

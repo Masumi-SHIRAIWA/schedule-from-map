@@ -8,13 +8,14 @@ export default async function handler(req, res){
       try {
         const updateTask = taskList.filter(task => task.type == "UPDATE");
         for (const task of updateTask) {
-          const parseDate = new Date(task.deadline);
+          // const parseDate = new Date(task.deadline);
           await prisma.task.update({
             where: {id: task.id},
             data: {
               name: task.name,
               done: task.done,
-              deadline: parseDate.toISOString(),
+              deadline: task.deadline,
+              // deadline: parseDate.toISOString(),
               projectId: task.projectId,
               x: task.x,
               y: task.y,

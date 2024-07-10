@@ -20,6 +20,10 @@ import RootNodeDesign from "./mindMapDesign/RootNodeDesign";
 // Edgeのカスタム用．ReactFlowにプロパティとして渡す
 import EdgesDesign  from "./mindMapDesign/EdgesDesign";
 
+import convertISOToDateString from "@/util/dateConverter"; // ISOのString型をDate(YYYY-MM-DD)型のString型にする
+import useMindMapStore from "@/util/store/mindMap";
+import { shallow } from 'zustand/shallow';
+
 // ------------------------- END of import part -------------------------
 
 //  ------------------------- Contents of Each state (Nodes, Edges, Tasks)   -------------------------
@@ -57,7 +61,7 @@ function initializeNodes(tasks){
     type: task.rootNode ? "root" : "mindmap", // もし，Rootタスクなら"root"
     data: { 
       taskName: task.name,
-      deadline : task.deadline, 
+      deadline : convertISOToDateString(task.deadline), 
     },
     position: {x: task.x, y: task.y},
     dragHandle: '.dragHandle',
@@ -84,24 +88,21 @@ const nodeTypes = {
 const edgeTypes = {
   mindmap: EdgesDesign,
 };
-
 // エッジが実際に確定する前に表示されるラインのスタイル(色・幅)を制御
 const connectionLineStyle = { stroke: '#FFAA11', strokeWidth: 3};
-
 // 新しいエッジが確定されたときに適用されるデフォルトのオプションを指定
 const defaultEdgeOptions = { style: { stroke: '#FFAA11', strokeWidth: 3 } , type: 'mindmap'};
 
 
-// onLoad関数：ReactFlowにプロパティとして渡す
-const onLoad = (reactFlowInstance) => {
-// fitView: すべてのノードとエッジが表示されるようにビューを調整する
-// グラフ全体がコンポーネントのビューポート内に収まるよう
-  reactFlowInstance.fitView();
-};
+// // onLoad関数：ReactFlowにプロパティとして渡す
+// const onLoad = (reactFlowInstance) => {
+// // fitView: すべてのノードとエッジが表示されるようにビューを調整する
+// // グラフ全体がコンポーネントのビューポート内に収まるよう
+//   reactFlowInstance.fitView();
+// };
 
 // MindMap Component
 export default function MindMap({taskList, projectId}) {
-
   // 初期レンダリング時の処理
   useEffect(() => {
     // DBからTaskを取得・Type属性の追加（DB反映時に使用）
@@ -110,85 +111,71 @@ export default function MindMap({taskList, projectId}) {
       type: "EXISTING"
     }))
     console.log("初期レンダリング：", taskList);
+    const initialNodes = initializeNodes(taskList);
+    console.log(initialNodes)
+    const initialEdges = initializeEdges(taskList);
+    console.log(initialEdges)
+    setNodes(initialNodes);
+    setEdges(initialEdges);
   }, [])
 
   // 独自のステート管理
   const [tasks, setTasks] = useState(taskList);
-  const initialNodes = initializeNodes(tasks);
-  const initialEdges = initializeEdges(tasks);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  // const initialNodes = initializeNodes(tasks);
+  // const initialEdges = initializeEdges(tasks);
+  // const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  // const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [taskName, setTaskName] = useState("");
-  const [deadline, setDeadline] = useState(null)
+  const [deadline, setDeadline] = useState(null) // データ型はどうする？DateのStringか、'Y-M-D'のStringか
+
+  // zUstandでのステート管理
+  const {nodes, edges, setNodes, setEdges, addNewNode, addNewEdge, onNodesChange, onEdgesChange} = useMindMapStore(
+    (state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      setNodes: state.setNodes,
+      setEdges: state.setEdges,
+      addNewNode: state.addNewNode,
+      addNewEdge: state.addNewEdge,
+      onNodesChange: state.onNodesChange,
+      onEdgesChange: state.onEdgesChange,
+    }),
+    shallow
+  );
 
   const connectingNodeId = useRef(null); //
   const store = useStoreApi(); // React Flowの"ストア"にアクセスするカスタムフックの1つ
   // React Flowのストアには、ノードやエッジ、ペインなどの重要な情報が含まれている
   const { screenToFlowPosition } = useReactFlow(); // React Flowの"コンポーネント"のプロパティや状態，イベントにアクセスできる．
 
-
-  // ノードの追加：Tasks Stateにも追加 (削除予定)
-  const addNode = (e) => {
-    e.preventDefault();
-    console.log(typeof(deadline))
-
-    const nodeIds = nodes.map(node => parseInt(node.id, 10));
-    const nodeId = Math.max(...nodeIds) + 1;
-
-    const x = Math.random() * window.innerWidth;
-    const y = Math.random() * window.innerHeight;
-
-    setNodes((prevNodes) =>
-      prevNodes.concat({
-        id: nodeId.toString(),
-        data: { 
-          taskName: taskName,
-          deadline: deadline,
-        },
-        position: {
-          x: x,
-          y: y,
-        },
-        type: "mindmap",
-        dragHandle: '.dragHandle',
-      })
-    );
-
-  };
-
   // エッジを伸ばして子ノードを作成
   const addChildNode = (parentNode, childNodePosition) => {
     const nodeIds = nodes.map(node => parseInt(node.id, 10));
-    const nodeId = Math.max(...nodeIds) + 1;
+    var nodeId = Math.max(...nodeIds) + 1;
     const edgeIds = edges.map(edge => parseInt(edge.id, 10));
     var edgeId = 0;
     if(edgeIds.length){ edgeId = Math.max(...edgeIds) + 1; }
 
     const position = childNodePosition;
     const taskName = "NewTask";
-    const deadline = "2024-05-30"; // この追加の場合，Deadlineをどう決めるか
+    const deadline = new Date(); // とりあえず今日のDate型
 
-    setNodes((prevNodes) =>
-      prevNodes.concat({
-        id: nodeId.toString(),
-        data: { 
-          taskName: taskName,
-          deadline: deadline
-        },
-        position,
-        type: "mindmap",
-        dragHandle: '.dragHandle',
-      })
-    );
+    addNewNode({
+      id: nodeId.toString(),
+      data: { 
+        taskName: taskName,
+        deadline: convertISOToDateString(deadline.toISOString)
+      },
+      position,
+      type: "mindmap",
+      dragHandle: '.dragHandle',
+    })
 
-    setEdges((prevEdges) => 
-      prevEdges.concat({
-        id: edgeId.toString(),
-        source: parentNode.id,
-        target: nodeId.toString(),
-      })
-    );
-
+    addNewEdge({
+      id: edgeId.toString(),
+      source: parentNode.id,
+      target: nodeId.toString(),
+    })
 
     // Tasks Stateにも追加
     setTasks((prevTasks) => 
@@ -196,7 +183,7 @@ export default function MindMap({taskList, projectId}) {
         id: null,
         name: taskName,
         done: false,
-        deadline: deadline,
+        deadline: deadline.toISOString,
         projectId: projectId, // 変更
         x: childNodePosition.x,
         y: childNodePosition.y,
@@ -223,23 +210,24 @@ export default function MindMap({taskList, projectId}) {
     const tasksMap = new Map(tasks.map(obj => [obj.nodeId, obj]));
     for (const node of nodes) {
       const taskTemp = tasksMap.get(parseInt(node.id));
-    // 既存のTaskであれば，更新されているか確認
+    // 既存のTaskであれば，内容が更新されているか確認
       var updated = false;
       if (taskTemp.name != node.data.taskName){updated = true}
-      if (taskTemp.deadline != node.data.deadline){updated = true}
+      // Deadlineの確認。nodeのDeadlineをDate型Stringにして確認する
+      const pareseNodeDeadline = new Date(node.data.deadline).toISOString
+      if (taskTemp.deadline != pareseNodeDeadline){updated = true}
       if (taskTemp.x != node.position.x){updated = true}
       if (taskTemp.y != node.position.y){updated = true}
       console.log(typeof(taskTemp.deadline), taskTemp.deadline)
       tasksMap.set(parseInt(node.id), {
         ...taskTemp,
         name: node.data.taskName,
-        deadline: node.data.deadline,
+        deadline: pareseNodeDeadline,
         x: node.position.x,
         y: node.position.y,
         type: taskTemp.type == "NEW" ? "NEW" : updated ? "UPDATE" : "EXISTING" //"DEL"も追加
       })
     }
-    console.log("tasksMap: ", tasksMap);
     const newTasks = Array.from(tasksMap.entries()).map(([key, value]) => ({ id: key, ...value })); 
     setTasks(newTasks);
 
@@ -289,23 +277,31 @@ export default function MindMap({taskList, projectId}) {
   // onConnect：ノード間にエッジ（接続）が追加されたときに呼ばれるコールバック関数
   // コールバックとして定義し無駄なレンダリングを防ぐ
   const onConnect = useCallback((params) => {
-      setEdges(edges.filter((edge) => edge.target != params.target));
-      setEdges((edges) => addEdge(params, edges));
+    setEdges(edges.filter((edge) => edge.target != params.target));
+    
+    const edgeIds = edges.map(edge => parseInt(edge.id, 10));
+    var edgeId = 0;
+    if(edgeIds.length){ edgeId = Math.max(...edgeIds) + 1; }
+    addNewEdge({
+      id: edgeId.toString(),
+      source: params.source,
+      target: params.target,
+    })
 
-      setTasks(tasks.map(task => {
-        if(task.id == parseInt(params.target)){
-          task.parentId = parseInt(params.source)
-          task.type = "UPDATE"
-        };
-        return task;
-      }))
+    setTasks(tasks.map(task => {
+      if(task.id == parseInt(params.target)){
+        task.parentId = parseInt(params.source)
+        task.type = "UPDATE"
+      };
+      return task;
+    }))
 
 
-    }, [setEdges]);
+  }, [edges, setEdges]);
 
   const onConnectStart = useCallback((_, {nodeId}) => {
-    console.log("in onConnectStart, _ : ", _);
-    console.log("in onConnectStart, nodeId : ", nodeId);
+    // console.log("in onConnectStart, _ : ", _);
+    // console.log("in onConnectStart, nodeId : ", nodeId);
     connectingNodeId.current = nodeId;
   }, [])
 
@@ -363,7 +359,7 @@ export default function MindMap({taskList, projectId}) {
           onConnectEnd={onConnectEnd}
 
 
-          onLoad={onLoad}
+          // onLoad={onLoad}
           fitView
 
           className="flex-grow h-100 w-100">
