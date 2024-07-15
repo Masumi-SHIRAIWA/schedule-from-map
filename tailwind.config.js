@@ -7,6 +7,17 @@ module.exports = {
   ],
   theme: {
     extend: {
+      minWidth: {
+        'mindmap': '850px',
+      },
+      minHeight: {
+        'mindmap': '500px',
+      },flexGrow: {
+        '2': '2',
+        '3': '3',
+        '4': '4',
+        '5': '5',
+      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":

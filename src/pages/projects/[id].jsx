@@ -1,9 +1,11 @@
 // 個別のプロジェクトのページ．
+import { useState, useEffect } from 'react';
 import { useRouter } from "next/router";
 import prisma from "@/util/prisma";
-import {ProjectIcons} from '@/components/projectIcons/ProjectIcons'
+import {ProjectIcons} from '@/components/projectIcons/ProjectIcons';
 
-import MindMap from '@/components/MindMap'
+import MindMap from '@/components/MindMap';
+import Calender from '@/components/Calender';
 
 // React Flow フックを使用するためにインポート
 import { ReactFlowProvider } from 'reactflow';
@@ -46,23 +48,62 @@ export async function getServerSideProps(context){
 }
 
 const Project = (props) => {
+    const [windowSize, setWindowSize] = useState({height:null, width:null})
     console.log(props.project);
     console.log(props.tasks);
+    useEffect(() => {
+        // ウィンドウサイズを取得して状態を更新する関数
+        const handleResize = () => {
+          setWindowSize({
+            height : window.innerHeight,
+            width : window.innerWidth,
+        });
+        };
+    
+        // リサイズイベントリスナーを追加
+        window.addEventListener('resize', handleResize);
+    
+        // 初期サイズを設定
+        handleResize();
+    
+        // クリーンアップ関数でイベントリスナーを削除
+        return () => window.removeEventListener('resize', handleResize);
+      }, []); // 空の依存配列を使用することで、マウント時とアンマウント時にのみ実行される
+    
+
 
     return (
 
-        <div className={`grid grid-rows-5 gap-0 w-screen h-screen`}>
-            <div className="flex items-center px-10 w-full "> 
+        <div className="flex flex-col  min-w-screen min-h-screen p-5">
+            <div className="flex flex-grow-0 items-center px-10"> 
                 <div className="flex-shrink-0">
                     <ProjectIcons className="h-14 w-14 fill-gray-500" type="book"/>
                 </div>
                 <div className="inline-block font-bold text-4xl text-gray-700 leading-10 mt-8 mb-8">{props.project.name}</div>
+                {windowSize.height},{windowSize.width}
             </div>
-            <div className="row-span-4 p-10 m-3  border border-gray-800 rounded-md">
-                <ReactFlowProvider>
-                    <MindMap taskList={props.tasks} projectId={props.project.id}/> 
-                </ReactFlowProvider>
-            </div>
+                {windowSize.width > 1300 ? (
+                    <div className="flex flex-grow h-full w-full">
+                      <div className="min-w-mindmap min-h-full flex-grow-5 p-10 m-3  border border-gray-800 rounded-md">
+                        <ReactFlowProvider>
+                          <MindMap taskList={props.tasks} projectId={props.project.id}/> 
+                        </ReactFlowProvider>
+                      </div>
+                      <div className='flex-grow-2'>
+                        <Calender taskList={props.tasks}/>
+                      </div>
+                    </div>):(
+                      <div className='flex flex-col'>
+                        <div className=" min-w-mindmap min-h-mindmap h-0  p-10 m-3  border border-gray-800 rounded-md">
+                            <ReactFlowProvider>
+                                <MindMap taskList={props.tasks} projectId={props.project.id}/> 
+                            </ReactFlowProvider>
+                        </div>
+                        <Calender taskList={props.tasks}/>
+                    </div>)
+                }
+            
+
         </div>
 
     )
