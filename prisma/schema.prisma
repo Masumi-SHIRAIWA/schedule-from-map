@@ -22,6 +22,7 @@ model Project {
     owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
     ownerId Int
     icon String
+    colorid Int
     done Boolean @default(false)
     deadline DateTime
     latestTasks String?
@@ -39,5 +40,5 @@ model Task {
     y Int @default(0)
     nodeId Int
     rootNode Boolean @default(false)
-    parentId Int?
+    parentNodeId Int?
 }

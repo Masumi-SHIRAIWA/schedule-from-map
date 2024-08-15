@@ -39,7 +39,7 @@ export default async function handler(req, res){
               y: task.y,
               nodeId: task.nodeId,
               rootNode: task.rootNode,
-              parentId: task.parentId
+              parentNodeId: task.parentNodeId
             }
           });
         }

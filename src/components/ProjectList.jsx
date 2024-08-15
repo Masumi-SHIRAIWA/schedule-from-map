@@ -51,18 +51,21 @@ export const ProjectList = (props) => {
             </div>          
 
             <div>
-                <ul className="max-w-lg divide-y divide-gray-400 dark:divide-gray-700">
+                {/* <ul className="max-w-lg divide-y divide-gray-400 dark:divide-gray-700"> */}
+                {/* <div className='flex flex-wrap  align-top w-screen h-full px-16 py-8'> */}
+                <div className='max-w-screen-2xl mx-auto  place-items-center w-screen h-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 px-16 py-8'>
+
                     {
                         displayProjects.map(project => (
-                            <li key={project.id} className="pt-4 sm:pt-4 pb-4 sm:pb-4">
+                            <div key={project.id} className="w-full flex justify-center">
                                 <ProjectOverview
                                 project={project}
                                 onCheck={handleCheck}/>
-                            </li>
+                            </div>
                         ))
                     }
                     
-                </ul>
+                </div>
             </div>
         </div>
     )

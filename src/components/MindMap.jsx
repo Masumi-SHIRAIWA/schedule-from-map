@@ -19,40 +19,17 @@ import NodesDesign  from "./mindMapDesign/NodesDesign";
 import RootNodeDesign from "./mindMapDesign/RootNodeDesign";
 // Edgeのカスタム用．ReactFlowにプロパティとして渡す
 import EdgesDesign  from "./mindMapDesign/EdgesDesign";
+import { theme_colors, done_colors } from '@/util/colors'; // theme_colorをJSファイルから利用する
 
 import convertISOToDateString from "@/util/dateConverter"; // ISOのString型をDate(YYYY-MM-DD)型のString型にする
+// MindMap のZustandでの管理
 import useMindMapStore from "@/util/store/mindMap";
+// Tasks のZustandでの管理
+import useTasksStore from '@/util/store/tasks';
 import { shallow } from 'zustand/shallow';
+import { Tektur } from "next/font/google";
 
 // ------------------------- END of import part -------------------------
-
-//  ------------------------- Contents of Each state (Nodes, Edges, Tasks)   -------------------------
-// Nodes [
-//   {
-//     id: "1",
-//     type: "input",
-//     data: { 
-        //   taskName: "Root Task" 
-        //   deadline: "2024-05-20"
-        // },
-//     position: { x: 0, y: 0 },
-//   },
-//   { },
-// ];
-// Edges [
-//   {
-//     id: "1",
-//     source: "2",
-//     target: "5",
-//   },
-//   { }
-// ];
-// Tasks [
-//   {
-//     ...task,
-//     type: "NEW" or "UPDATE" or "EXISTING" or "DELETE"
-//   }
-// ]
 
 // Nodeリストの初期化関数
 function initializeNodes(tasks){
@@ -62,6 +39,7 @@ function initializeNodes(tasks){
     data: { 
       taskName: task.name,
       deadline : convertISOToDateString(task.deadline), 
+      done: task.done,
     },
     position: {x: task.x, y: task.y},
     dragHandle: '.dragHandle',
@@ -73,7 +51,7 @@ function initializeNodes(tasks){
 function initializeEdges(tasks){
   const edges = tasks.map((task, index) => ({
     id: index.toString(),
-    source: task.parentId ? task.parentId.toString() : null,
+    source: task.parentNodeId ? task.parentNodeId.toString() : null,
     target: task.nodeId.toString(),
   })).filter(edge => edge.target !== null);
   
@@ -95,44 +73,22 @@ const defaultEdgeOptions = { style: { stroke: '#FFAA11', strokeWidth: 3 } , type
 
 
 // // onLoad関数：ReactFlowにプロパティとして渡す
-// const onLoad = (reactFlowInstance) => {
-// // fitView: すべてのノードとエッジが表示されるようにビューを調整する
-// // グラフ全体がコンポーネントのビューポート内に収まるよう
-//   reactFlowInstance.fitView();
-// };
+const onLoad = (reactFlowInstance) => {
+// fitView: すべてのノードとエッジが表示されるようにビューを調整する
+// グラフ全体がコンポーネントのビューポート内に収まるよう
+  reactFlowInstance.fitView();
+};
 
 // MindMap Component
-export default function MindMap({taskList, projectId}) {
-  // 初期レンダリング時の処理
-  useEffect(() => {
-    // DBからTaskを取得・Type属性の追加（DB反映時に使用）
-    taskList = taskList.map(task => ({
-      ...task,
-      type: "EXISTING"
-    }))
-    console.log("初期レンダリング：", taskList);
-    const initialNodes = initializeNodes(taskList);
-    console.log(initialNodes)
-    const initialEdges = initializeEdges(taskList);
-    console.log(initialEdges)
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-  }, [])
-
-  // 独自のステート管理
-  const [tasks, setTasks] = useState(taskList);
-  // const initialNodes = initializeNodes(tasks);
-  // const initialEdges = initializeEdges(tasks);
-  // const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  // const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [taskName, setTaskName] = useState("");
-  const [deadline, setDeadline] = useState(null) // データ型はどうする？DateのStringか、'Y-M-D'のStringか
-
+export default function MindMap({ projectId, projectColor}) {
+  // console.log("ここが毎回呼び出される")
   // zUstandでのステート管理
-  const {nodes, edges, setNodes, setEdges, addNewNode, addNewEdge, onNodesChange, onEdgesChange} = useMindMapStore(
+  const {colorId, nodes, edges, setColorId, setNodes, setEdges, addNewNode, addNewEdge, onNodesChange, onEdgesChange} = useMindMapStore(
     (state) => ({
+      colorId: state.colorId,
       nodes: state.nodes,
       edges: state.edges,
+      setColorId: state.setColorId,
       setNodes: state.setNodes,
       setEdges: state.setEdges,
       addNewNode: state.addNewNode,
@@ -142,6 +98,27 @@ export default function MindMap({taskList, projectId}) {
     }),
     shallow
   );
+  const {tasks, setTasks, addNewTask} = useTasksStore(
+    (state) => ({
+        tasks: state.tasks,
+        setTasks: state.setTasks,
+        addNewTask: state.addNewTask,
+    }),
+    shallow
+    );
+  // 初期レンダリング時の処理
+  useEffect(() => {
+    setColorId(projectColor)
+    const initialNodes = initializeNodes(tasks);
+    const initialEdges = initializeEdges(tasks);
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [tasks])
+
+  // 独自のステート管理
+  const [taskName, setTaskName] = useState("");
+  const [deadline, setDeadline] = useState(null) // データ型はどうする？DateのStringか、'Y-M-D'のStringか
+
 
   const connectingNodeId = useRef(null); //
   const store = useStoreApi(); // React Flowの"ストア"にアクセスするカスタムフックの1つ
@@ -164,7 +141,8 @@ export default function MindMap({taskList, projectId}) {
       id: nodeId.toString(),
       data: { 
         taskName: taskName,
-        deadline: convertISOToDateString(deadline.toISOString)
+        deadline: convertISOToDateString(deadline.toISOString),
+        done: false,
       },
       position,
       type: "mindmap",
@@ -177,22 +155,19 @@ export default function MindMap({taskList, projectId}) {
       target: nodeId.toString(),
     })
 
-    // Tasks Stateにも追加
-    setTasks((prevTasks) => 
-      prevTasks.concat({
-        id: null,
-        name: taskName,
-        done: false,
-        deadline: deadline.toISOString,
-        projectId: projectId, // 変更
-        x: childNodePosition.x,
-        y: childNodePosition.y,
-        nodeId: nodeId,
-        rootNode: false,
-        parentId: parseInt(parentNode.id), // 変更
-        type: "NEW"
-      })
-    );
+    addNewTask({
+      id: null,
+      name: taskName,
+      done: false,
+      deadline: deadline.toISOString(),
+      projectId: projectId, // 変更
+      x: childNodePosition.x,
+      y: childNodePosition.y,
+      nodeId: nodeId,
+      rootNode: false,
+      parentNodeId: parseInt(parentNode.id), // 変更
+      type: "NEW"
+    })
   
   }
 
@@ -214,8 +189,9 @@ export default function MindMap({taskList, projectId}) {
       var updated = false;
       if (taskTemp.name != node.data.taskName){updated = true}
       // Deadlineの確認。nodeのDeadlineをDate型Stringにして確認する
-      const pareseNodeDeadline = new Date(node.data.deadline).toISOString
+      const pareseNodeDeadline = new Date(node.data.deadline).toISOString()
       if (taskTemp.deadline != pareseNodeDeadline){updated = true}
+      if(taskTemp.done != node.data.done){updated = true}
       if (taskTemp.x != node.position.x){updated = true}
       if (taskTemp.y != node.position.y){updated = true}
       console.log(typeof(taskTemp.deadline), taskTemp.deadline)
@@ -223,13 +199,14 @@ export default function MindMap({taskList, projectId}) {
         ...taskTemp,
         name: node.data.taskName,
         deadline: pareseNodeDeadline,
+        done: node.data.done,
         x: node.position.x,
         y: node.position.y,
         type: taskTemp.type == "NEW" ? "NEW" : updated ? "UPDATE" : "EXISTING" //"DEL"も追加
       })
     }
-    const newTasks = Array.from(tasksMap.entries()).map(([key, value]) => ({ id: key, ...value })); 
-    setTasks(newTasks);
+    var newTasks = Array.from(tasksMap.entries()).map(([key, value]) => ({ id: key, ...value })); 
+    // setTasks(newTasks);
 
     // API（updateTask）呼び出し
     try{
@@ -243,11 +220,11 @@ export default function MindMap({taskList, projectId}) {
       console.log(e);
     }
     
-    setTasks((prevTasks) => prevTasks.map(task => ({
+    newTasks = newTasks.map(task => ({
       ...task,
       type: "EXISTING"
-    })))
-
+    }))
+    setTasks(newTasks)
   }
 
   // マウスの位置から，Nodeの位置を適切に割当てる．
@@ -290,7 +267,7 @@ export default function MindMap({taskList, projectId}) {
 
     setTasks(tasks.map(task => {
       if(task.id == parseInt(params.target)){
-        task.parentId = parseInt(params.source)
+        task.parentNodeId = parseInt(params.source)
         task.type = "UPDATE"
       };
       return task;
@@ -324,17 +301,11 @@ export default function MindMap({taskList, projectId}) {
 
   return (
     <div id="container" className="flex flex-col w-full h-full ">
-      {/* <form onSubmit={addNode} className='mb-4 space-y-3'>
-          <input type='text' id='taskNameForm'  onChange={(e) => {setTaskName(e.target.value)}} className="w-full border px-4 py-2 rounded-lg focus:outlin"/>
-          <input type='date' id='deadlineForm'  onChange={(e) => {setDeadline(e.target.value)}} className="w-full border px-4 py-2 rounded-lg focus:outlin"/>
-          <input type="submit" value="ADD A TASK" className="ml-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-200"/>
-      </form> */}
-
       <div className="flex justify-left">
           <button
           type="button"
           onClick={saveChange}
-          className="ml-2 px-4 py-2 bg-orange-300 text-white rounded-md hover:bg-orange-400 focus:outline-none focus:ring focus:ring-blue-200"
+          className={`ml-2 px-4 py-2 bg-main-dark-color text-white rounded-md hover:bg-hovor-dark-color `}
           >SAVE CHANGE</button>
       </div>
       <ReactFlow 
@@ -348,9 +319,9 @@ export default function MindMap({taskList, projectId}) {
           edges={edges}
           edgeTypes={edgeTypes}
           onEdgesChange={onEdgesChange}
-          connectionLineStyle={connectionLineStyle} // 接続前
-          defaultEdgeOptions={defaultEdgeOptions} // 接続後
-          connectionLineType={ConnectionLineType.Straight} // 接続前のエッジの形を制御
+          // connectionLineStyle={connectionLineStyle} // 接続前
+          // defaultEdgeOptions={defaultEdgeOptions} // 接続後
+          // connectionLineType={ConnectionLineType.Straight} // 接続前のエッジの形を制御
           // ConnectionLineType.Bezier: 曲線の接続ライン(default)
           // ConnectionLineType.Straight: 直線の接続ライン
           // ConnectionLineType.Step: 階段状の接続ライン
@@ -360,18 +331,11 @@ export default function MindMap({taskList, projectId}) {
 
 
           // onLoad={onLoad}
-          fitView
+          fitView = {true}
 
           className="flex-grow h-100 w-100">
 
           <Controls />
-          {/* <MiniMap
-            nodeColor={(n) => {
-              if (n.type === "input") return "blue";
-
-              return "#FFCC00";
-          }}
-          /> */}
       </ReactFlow>
     </div>
 

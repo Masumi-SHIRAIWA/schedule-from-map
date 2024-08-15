@@ -10,6 +10,7 @@ CREATE TABLE "Project" (
     "name" TEXT NOT NULL,
     "ownerId" INTEGER NOT NULL,
     "icon" TEXT NOT NULL,
+    "colorid" INTEGER NOT NULL,
     "done" BOOLEAN NOT NULL DEFAULT false,
     "deadline" DATETIME NOT NULL,
     "latestTasks" TEXT,
@@ -27,6 +28,6 @@ CREATE TABLE "Task" (
     "y" INTEGER NOT NULL DEFAULT 0,
     "nodeId" INTEGER NOT NULL,
     "rootNode" BOOLEAN NOT NULL DEFAULT false,
-    "parentId" INTEGER,
+    "parentNodeId" INTEGER,
     CONSTRAINT "Task_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
