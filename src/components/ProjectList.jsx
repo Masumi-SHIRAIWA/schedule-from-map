@@ -6,7 +6,7 @@ export const ProjectList = (props) => {
 
     // 変える
     const [projects, setProjects] = useState(props.projects);
-    const [filter, setFilter] = useState("ALL");
+    const [filter, setFilter] = useState("TODO");
     
     // Filterの切り替え
     const handleFilterChange = value => setFilter(value);

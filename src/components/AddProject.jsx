@@ -55,7 +55,7 @@ export const AddProject = ({ addProject }) => {
         <div>
             <button
                 onClick={openModal}
-                className="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                className="block text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
             >
                 プロジェクトを作成
             </button>
@@ -64,35 +64,27 @@ export const AddProject = ({ addProject }) => {
                 <div
                     className="fixed inset-0 z-50 flex justify-center items-center w-full h-full bg-black bg-opacity-50"
                 >
-                    <div className="bg-white p-4 rounded-lg shadow-lg">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                            新規作成
-                        </h3>
+                    <div className="bg-white w-full max-w-maxModal mx-20 px-20 pt-8 pb-5 rounded-lg shadow-lg">
+                        <h2 className="text-2xl my-4 font-semibold text-gray-900">
+                            NEW PROJECT
+                        </h2>
                         
-                        <form onSubmit={submitData} className='mb-4 space-y-3'>
-                            <p className="mt-2 text-sm text-gray-500">
-                                Project Name
-                            </p>
-                            <input type='text' id='projectNameForm'  onChange={(e) => {setProjectName(e.target.value)}} className="w-full border px-4 py-2 rounded-lg focus:outlin"/>
-                            <p className="mt-2 text-sm text-gray-500">
-                                Icon Name
-                            </p>
-                            <input type='text' id='IconForm'  onChange={(e) => {setIcon(e.target.value)}} className="w-full border px-4 py-2 rounded-lg focus:outlin"/>
-                            <p className="mt-2 text-sm text-gray-500">
-                                Color Id
-                            </p>
-                            <input type='text' id='colorIdForm'  onChange={(e) => {setColorId(parseInt(e.target.value))}} className="w-full border px-4 py-2 rounded-lg focus:outlin"/>
-                            <p className="mt-2 text-sm text-gray-500">
-                                Deadline
-                            </p>
-                            <input type='date' id='deadlineForm'  onChange={(e) => {setDeadline(e.target.value)}} className="w-full border px-4 py-2 rounded-lg focus:outlin"/>
+                        <form onSubmit={submitData} className=' mb-4 space-y-3 '>
+
+                            <input type='text' id='projectNameForm' placeholder='Project Name' onChange={(e) => {setProjectName(e.target.value)}} className="h-12 w-full pl-3 mb-8 shadow-lg  rounded-lg focus:outline"/>
+
+                            <input type='text' id='IconForm' placeholder='Icon Name' onChange={(e) => {setIcon(e.target.value)}} className="h-12 w-full mb-8 pl-3 shadow-lg  rounded-lg focus:outline"/>
+
+                            <input type='text' id='colorIdForm' placeholder='Color Id' onChange={(e) => {setColorId(parseInt(e.target.value))}} className="h-12 w-full pl-3 shadow-lg  rounded-lg focus:outline"/>
+
+                            <input type='date' id='deadlineForm' placeholder='Deadline' onChange={(e) => {setDeadline(e.target.value)}} className="h-12 w-full pl-3 pr-6 shadow-lg  rounded-lg focus:outline"/>
                             <div className="flex justify-end mt-4">
-                                <input type="submit" value="ADD A PROJECT" className='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5'/>
+                                <input type="submit" value="ADD A PROJECT" className='text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5'/>
                                 <button
                                     onClick={declinegenerating}
                                     className="ml-3 py-2.5 px-5 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100"
                                 >
-                                    破棄
+                                    Cancel
                                 </button>
                             </div>
                         </form>

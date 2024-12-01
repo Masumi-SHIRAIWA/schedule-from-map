@@ -7,12 +7,16 @@ module.exports = {
   ],
   theme: {
     extend: {
-      minWidth: {
+      maxWidth: {
+        
+        'maxModal': '760px',
+      },minWidth: {
         'mindmap': '850px',
       },
       minHeight: {
         'mindmap': '500px',
-      },flexGrow: {
+      },
+      flexGrow: {
         '2': '2',
         '3': '3',
         '4': '4',

@@ -10,6 +10,9 @@ import ReactFlow, {
     useStoreApi,
     useReactFlow,
     nodeOrigin,
+    getIncomers,
+    getOutgoers,
+    getConnectedEdges,
   } from "reactflow";
 import "reactflow/dist/style.css";
 
@@ -81,6 +84,7 @@ const onLoad = (reactFlowInstance) => {
 
 // MindMap Component
 export default function MindMap({ projectId, projectColor}) {
+  
   // console.log("ここが毎回呼び出される")
   // zUstandでのステート管理
   const {colorId, nodes, edges, setColorId, setNodes, setEdges, addNewNode, addNewEdge, onNodesChange, onEdgesChange} = useMindMapStore(
@@ -98,22 +102,27 @@ export default function MindMap({ projectId, projectColor}) {
     }),
     shallow
   );
-  const {tasks, setTasks, addNewTask} = useTasksStore(
+  const {tasks, setTasks, addNewTask, removeTask} = useTasksStore(
     (state) => ({
         tasks: state.tasks,
         setTasks: state.setTasks,
         addNewTask: state.addNewTask,
+        removeTask: state.removeTask,
     }),
     shallow
     );
   // 初期レンダリング時の処理
   useEffect(() => {
     setColorId(projectColor)
+    console.log("MindMap Tasks", tasks)
     const initialNodes = initializeNodes(tasks);
     const initialEdges = initializeEdges(tasks);
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, [tasks])
+  // console.log(tasks)
+  // console.log(nodes)
+  // console.log(edges)
 
   // 独自のステート管理
   const [taskName, setTaskName] = useState("");
@@ -135,13 +144,13 @@ export default function MindMap({ projectId, projectColor}) {
 
     const position = childNodePosition;
     const taskName = "NewTask";
-    const deadline = new Date(); // とりあえず今日のDate型
+    const deadline = new Date().toISOString(); // とりあえず今日のDate型
 
     addNewNode({
       id: nodeId.toString(),
       data: { 
         taskName: taskName,
-        deadline: convertISOToDateString(deadline.toISOString),
+        deadline: convertISOToDateString(deadline),
         done: false,
       },
       position,
@@ -159,7 +168,7 @@ export default function MindMap({ projectId, projectColor}) {
       id: null,
       name: taskName,
       done: false,
-      deadline: deadline.toISOString(),
+      deadline: deadline,
       projectId: projectId, // 変更
       x: childNodePosition.x,
       y: childNodePosition.y,
@@ -172,29 +181,61 @@ export default function MindMap({ projectId, projectColor}) {
   }
 
   // ノードの削除：nodesから削除．Tasks StateのTypeを”DEL"に 
-  const delNode = () => {
-    // nodes.del()
-    // task.type = "DEL";
-  };
+  const onNodesDelete = useCallback((deleted)=>{    
+    setEdges(
+      deleted.reduce((allEdges, node) => { // 消去前の全てのエッジ、消去されたノード
+        const incomers = getIncomers(node, nodes, edges); //削除されたエッジの親となっているノード(複数)
+        const incomer = incomers.length > 0 ? incomers[0] : None; // Noneになるのは、Rootノードが消えたとき
+        const outgoers = getOutgoers(node, nodes, edges); //削除されたノードの子となっているノード(複数)
+        const connectedEdges = getConnectedEdges([node], edges); // 消去したノードに繋がってたエッジ(＝消去済みエッジ)を取得
+        // resumainingEdgesという新しいエッジの配列を作成する。この配列には、削除したノードとは関係のない、フロー内のすべてのエッジが含まれる。
+        const remainingEdges = allEdges.filter(
+          (edge) => !connectedEdges.includes(edge),
+        );
+
+        const updatedEdges = connectedEdges.filter((edge) => edge.source==node.id)
+        const createdEdges = updatedEdges.map((edge)=>({
+          ...edge,
+          source: incomer.id
+        }))
+
+        const delTasks = tasks.filter(task => 
+          task.nodeId == parseInt(node.id)
+        )
+        for (const delTask of delTasks){
+          if (delTask.type == "NEW"){
+            removeTask(delTask.id)
+          }
+        }
+
+        return [...remainingEdges, ...createdEdges];
+      }, edges),
+    );
+
+    // delTask = tasks.filter(task => ({
+    //   task.nodeId ==
+    // }))
+    
+  },[nodes, edges]);
 
   // MAPの状態を保存（DBに反映）
   const saveChange = async (e) => {
     e.preventDefault();
-
+    // ルートノードの更新用
+    var rootNodeDoneChanged = false;
+    var projectDone;
     // nodes State を元に tasks Stateの更新
-    const tasksMap = new Map(tasks.map(obj => [obj.nodeId, obj]));
+    const tasksMap = new Map(tasks.map(obj => [obj.nodeId, obj])); // TasksをNodeIDで検索できるように
+    // Nodesの更新確認
     for (const node of nodes) {
       const taskTemp = tasksMap.get(parseInt(node.id));
-    // 既存のTaskであれば，内容が更新されているか確認
-      var updated = false;
-      if (taskTemp.name != node.data.taskName){updated = true}
+      if(taskTemp.rootNode && taskTemp.done != node.data.dnoe){
+        rootNodeDoneChanged = true;
+        projectDone = node.data.done;
+      }
+    
       // Deadlineの確認。nodeのDeadlineをDate型Stringにして確認する
       const pareseNodeDeadline = new Date(node.data.deadline).toISOString()
-      if (taskTemp.deadline != pareseNodeDeadline){updated = true}
-      if(taskTemp.done != node.data.done){updated = true}
-      if (taskTemp.x != node.position.x){updated = true}
-      if (taskTemp.y != node.position.y){updated = true}
-      console.log(typeof(taskTemp.deadline), taskTemp.deadline)
       tasksMap.set(parseInt(node.id), {
         ...taskTemp,
         name: node.data.taskName,
@@ -202,24 +243,55 @@ export default function MindMap({ projectId, projectColor}) {
         done: node.data.done,
         x: node.position.x,
         y: node.position.y,
-        type: taskTemp.type == "NEW" ? "NEW" : updated ? "UPDATE" : "EXISTING" //"DEL"も追加
+        type: taskTemp.type == "NEW" ? "NEW" : "EXISTING"
+      })
+    }
+    // 削除したNodesの更新確認
+    const nodesIds = new Set(nodes.map(node => node.id)); // Nodes の ID を Set に変換
+    const deletedTaskKeys = [...tasksMap.keys()].filter(key => !nodesIds.has(String(key)));
+
+    console.log(deletedTaskKeys)
+    for (const id of deletedTaskKeys){
+      const taskTemp = tasksMap.get(id);
+      tasksMap.set(id, {
+        ...taskTemp,
+        type: "DELETE"
+      })
+    }
+    // 削除したEdgesの更新確認
+    // const deletedEdges = edges.filter(edge => !tasksMap.has(parseInt(edge.target)))
+    // Edgesの保存
+    for(const edge of edges) {
+      tasksMap.set(parseInt(edge.target), {
+        ...tasksMap.get(parseInt(edge.target)),
+        parentNodeId: parseInt(edge.source),
       })
     }
     var newTasks = Array.from(tasksMap.entries()).map(([key, value]) => ({ id: key, ...value })); 
-    // setTasks(newTasks);
 
     // API（updateTask）呼び出し
     try{
+      // task の更新
       let result = await fetch('/api/updateTask' , {
         method: 'POST',
         headers: { 'Content-Type' : 'application/json'},
         body: JSON.stringify({tasks: newTasks})
       });
       console.log(result);
+      // project の更新
+      if (rootNodeDoneChanged){
+        result = await fetch('/api/updateProject' , {
+          method: 'POST',
+          headers: { 'Content-Type' : 'application/json'},
+          body: JSON.stringify({id: projectId, done: projectDone})
+        });
+      }
+      
     } catch (e) {
       console.log(e);
     }
     
+    newTasks = newTasks.filter((task) => task.type != "DELETE")
     newTasks = newTasks.map(task => ({
       ...task,
       type: "EXISTING"
@@ -313,6 +385,7 @@ export default function MindMap({ projectId, projectColor}) {
           nodes={nodes}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
+          onNodesDelete={onNodesDelete}
           nodeOrigin= {[0.5, 0.5]} // ノードの原点を指定
 
           // Edge

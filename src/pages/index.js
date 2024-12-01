@@ -29,7 +29,6 @@ export const getStaticProps = async () => {
 export default function Home(props) {
 
   const [projects, setProjects] = useState(props.projects);
-console.log(projects)
   return (
     <main
       className={`flex min-h-screen flex-col items-center  m-24 ${inter.className}`}

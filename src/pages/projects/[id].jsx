@@ -53,8 +53,18 @@ export async function getServerSideProps(context){
 
 const Project = (props) => {
     const [windowSize, setWindowSize] = useState({height:null, width:null})
-    console.log(props.project);
-    console.log(props.tasks);
+    
+    console.log(props.project.id);
+
+    // zUstandでのステート管理
+    const {tasks, setTasks } = useTasksStore(
+    (state) => ({
+        tasks: state.tasks,
+        setTasks: state.setTasks,
+    }),
+    shallow
+    );
+
     useEffect(() => {
 
         // tasksの管理
@@ -83,14 +93,8 @@ const Project = (props) => {
       }, []); // 空の依存配列を使用することで、マウント時とアンマウント時にのみ実行される
         
 
-    // zUstandでのステート管理
-    const {tasks, setTasks} = useTasksStore(
-    (state) => ({
-        tasks: state.tasks,
-        setTasks: state.setTasks,
-    }),
-    shallow
-    );
+
+
 
     return (
 
@@ -100,7 +104,6 @@ const Project = (props) => {
                     <ProjectIcons className={`h-14 w-14 fill-main-dark-color`} type="book"/>
                 </div>
                 <div className={`inline-block font-bold text-4xl text-main-dark-color leading-10 mt-8 mb-8`}>{props.project.name}</div>
-                {windowSize.height},{windowSize.width}
             </div>
                 {windowSize.width > 1300 ? (
                     <div className="flex flex-grow h-full w-full">

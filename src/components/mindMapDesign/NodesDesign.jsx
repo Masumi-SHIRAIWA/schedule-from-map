@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Handle, Position } from 'reactflow';
-
 
 // MindMap のZustandでの管理
 import useMindMapStore from "@/util/store/mindMap";
 import { shallow } from 'zustand/shallow';
+
+import { theme_colors, done_colors } from '@/util/colors'; // theme_colorをJSファイルから利用する
 
 export default function NodesDesign({ id, data }) {
   // zUstandでのステート管理
@@ -25,6 +26,10 @@ export default function NodesDesign({ id, data }) {
   const [taskName, setTaskName] = useState(data.taskName);
   const [deadline, setDeadline] = useState(data.deadline);
 
+  // useEffect(()=>{
+  //   setTaskName(data.taskName);
+  //   setDeadline(data.deadline);
+  // },[data])
 
   const handleTaskNameDoubleClick = () => {
     setIsEditingTaskName(true);
@@ -63,7 +68,7 @@ export default function NodesDesign({ id, data }) {
   return (
     <>
       {checked ? // done
-        <div className={`node-design bg-done-color-bg border-done-color-bg border-2 pl-4 pr-12 min-w-40 min-h-32  flex items-center z-10`}>
+        <div className={`node-design bg-done-color-bg border-done-color-bg border-2 shadow-2xl pl-4 pr-12 min-w-40 min-h-32  flex items-center z-10`}>
           <div className="dragHandle flex items-center ml-2 mr-4 for-checkbox">
             <input
               type="checkbox"
@@ -141,7 +146,8 @@ export default function NodesDesign({ id, data }) {
         </div>
     
       : // not done
-        <div className={`node-design bg-theme-color-${colorId} border-theme-color-${colorId} border-2 pl-4 pr-12 min-w-40 min-h-32  flex items-center z-10`}>
+        <div className={`node-design border-2 shadow-2xl pl-4 pr-12 min-w-40 min-h-32  flex items-center z-10`}
+        style={{background: theme_colors[colorId], borderColor: theme_colors[colorId],}}>
           <div className="dragHandle flex items-center ml-2 mr-4 for-checkbox">
             <input
               type="checkbox"

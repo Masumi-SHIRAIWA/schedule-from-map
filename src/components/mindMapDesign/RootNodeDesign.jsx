@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Handle, Position } from 'reactflow';
 import {ProjectIcons} from '@/components/projectIcons/ProjectIcons'
 
 // MindMap のZustandでの管理
 import useMindMapStore from "@/util/store/mindMap";
 import { shallow } from 'zustand/shallow';
+import { theme_colors, done_colors } from '@/util/colors'; // theme_colorをJSファイルから利用する
 
 // Nodeの見た目を調整する
 export default function RootNodeDesign({ id, data }) {
@@ -21,8 +22,13 @@ export default function RootNodeDesign({ id, data }) {
   const [checked, setChecked] = useState(data.done);
 
   // zustandのState管理を行なう。
-  const [taskName, setTaskName] = useState(data.taskName);
-  const [deadline, setDeadline] = useState(data.deadline);
+  const [taskName, setTaskName] = useState();
+  const [deadline, setDeadline] = useState();
+
+  useEffect(()=>{
+    setTaskName(data.taskName);
+    setDeadline(data.deadline);
+  },[data])
 
   const handleTaskNameDoubleClick = () => {
     setIsEditingTaskName(true);
@@ -62,7 +68,7 @@ export default function RootNodeDesign({ id, data }) {
     return (
       <>
       {checked ? // done
-        <div className='nodeDesign bg-done-color-bg rounded-full pl-4 pr-12 aspect-square flex items-center z-10'>
+        <div className='nodeDesign bg-done-color-bg rounded-full shadow-2xl pl-4 pr-12 aspect-square flex items-center z-10'>
 
           <div className="dragHandle flex items-center ml-2 mr-4 for-checkbox">
             <input
@@ -137,7 +143,7 @@ export default function RootNodeDesign({ id, data }) {
           </div>
         </div>
         : // not done
-          <div className='nodeDesign bg-white rounded-full pl-4 pr-12 aspect-square flex items-center z-10'>
+          <div className='nodeDesign bg-white rounded-full shadow-2xl pl-4 pr-12 aspect-square flex items-center z-10'>
 
             <div className="dragHandle flex items-center ml-2 mr-4 for-checkbox">
               <input
@@ -168,7 +174,7 @@ export default function RootNodeDesign({ id, data }) {
 
 
             <div className='flex flex-col justify-center items-center mx-auto flex-grow-1  w-60 overflow-hidden'>
-              <ProjectIcons className={`dragHandle h-36 w-36 fill-theme-color-${colorId}`} type=""/>
+              <ProjectIcons className={`dragHandle h-36 w-36 `} style = {{fill : theme_colors[colorId]}} type=""/>
               {isEditingTaskName ? (
                 <div className='relative cursor-text'>
                 <input
@@ -177,15 +183,19 @@ export default function RootNodeDesign({ id, data }) {
                   onChange={handleTaskNameChange}
                   onBlur={handleInputBlur}
                   onKeyDown={(e) => handleInputKeyPress(e, setIsEditingTaskName)}
-                  className={`block w-56 px-3 pt-4 focus:outline-none text-center text-6xl font-bold text-theme-color-${colorId}`}
+                  className={`block w-56 px-3 pt-4 focus:outline-none text-center text-6xl font-bold` }
+                  style = {{color : theme_colors[colorId]}}
                   autoFocus
                 />
                 <label
-                className={`absolute left-3 top-0 transition-all duration-300 -translate-y-0 text-xl text-theme-color-${colorId}`}
+                className={`absolute left-3 top-0 transition-all duration-300 -translate-y-0 text-xl `}
+                style = {{color : theme_colors[colorId]}}
                 >TaskName</label>
               </div>
               ) : (
-                <div className={`font-bold text-6xl text-theme-color-${colorId} cursor-text overflow-hidden text-ellipsis whitespace-nowrap`} onDoubleClick={handleTaskNameDoubleClick}>
+                <div className={`font-bold text-6xl cursor-text overflow-hidden text-ellipsis whitespace-nowrap`} 
+                style = {{color : theme_colors[colorId]}}
+                onDoubleClick={handleTaskNameDoubleClick}>
                   {taskName}
                 </div>
               )}
@@ -197,15 +207,19 @@ export default function RootNodeDesign({ id, data }) {
                   onChange={handleDeadlineChange}
                   onBlur={handleInputBlur}
                   onKeyDown={(e) => handleInputKeyPress(e, setIsEditingDeadline)}
-                  className={`block w-full px-3 pt-8 focus:outline-none text-2xl font-bold text-theme-color-${colorId}`}
+                  className={`block w-full px-3 pt-8 focus:outline-none text-2xl font-bold `}
+                  style = {{color : theme_colors[colorId]}}
                   autoFocus
                 />
                 <label
-                className={`absolute left-3 top-0 transition-all duration-300 -translate-y-0 text-lg text-theme-color-${colorId}`}
+                  className={`absolute left-3 top-0 transition-all duration-300 -translate-y-0 text-lg `}
+                  style = {{color : theme_colors[colorId]}}
                 >Deadline</label>
               </div>
               ) : (
-                <div className={`font-semibold text-2xl text-theme-color-${colorId} cursor-text overflow-hidden text-ellipsis whitespace-nowrap`} onDoubleClick={handleDeadlineDoubleClick}>
+                <div className={`font-semibold text-2xl cursor-text overflow-hidden text-ellipsis whitespace-nowrap`} 
+                style = {{color : theme_colors[colorId]}}
+                onDoubleClick={handleDeadlineDoubleClick}>
                   {deadline}
                 </div>
               )}

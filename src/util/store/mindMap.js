@@ -47,17 +47,26 @@ import convertISOToDateString from "@/util/dateConverter"; // ISOのString型を
     },
 
     // ノードが変わったときのアクション ReactFlowのプロパティにそのまま突っ込む
+    // ノードのDeleteにも対応してる。→
     onNodesChange: (changes) => {
+      // console.log(get().nodes)
+      // console.log("onNODESChange!!!!!!!")
         set({
           nodes: applyNodeChanges(changes, get().nodes),
         });
+        // console.log(get().nodes)
+
       },
 
     // エッジが変わったときのアクション
     onEdgesChange: (changes) => {
+      console.log(changes)
+      console.log(get().edges)
+      console.log("onEdgesChange!!!!!!!")
         set({
           edges: applyEdgeChanges(changes, get().edges),
         });
+      console.log(get().edges)
       },
 
     // ノードを追加するアクション

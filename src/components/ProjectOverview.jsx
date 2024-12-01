@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Router from "next/router";
 import {ProjectIcons} from '@/components/projectIcons/ProjectIcons'
+import { theme_colors, done_colors } from '@/util/colors'; // theme_colorをJSファイルから利用する
 
 export const ProjectOverview = (props) => {
 
@@ -34,10 +35,10 @@ export const ProjectOverview = (props) => {
             
         // </div>
 
-            <div onClick={() => Router.push("/projects/[id]", `/projects/${project.id}`)} className={`grow flex flex-col items-center min-w-52 max-w-96 h-52 rounded-lg bg-white border border-gray-300 transition-shadow duration-300 hover:shadow-2xl m-1`}>
-                <ProjectIcons className={`h-20 w-20 flex-grow-2 fill-theme-color-${project.colorid}`} type={project.icon}/>
+            <div onClick={() => Router.push("/projects/[id]", `/projects/${project.id}`)} className={`grow flex flex-col items-center min-w-52 max-w-96 h-52 rounded-lg bg-white border border-white transition-shadow duration-300 hover:shadow-2xl m-1`}>
+                <ProjectIcons className={`h-20 w-20 flex-grow-2 `} style={{fill: theme_colors[project.colorid]}} type={project.icon}/>
                 <p className=" grow text-lg font-medium text-main-dark-color truncate">
-                    {project.name}
+                    {project.name} 
                 </p>
 
             </div>
